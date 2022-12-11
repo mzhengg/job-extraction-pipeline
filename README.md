@@ -51,48 +51,13 @@ Docker volume: file system mounted on Docker container to preserve data generate
 
 Apache Airflow is the most popular data workflow orchestration tool.   
 
-# 1) Setup Terraform
-- Open terraform folder and follow the instructions in README.md
+## How to Setup and Deploy Dashboard
 
-# 2) Setup for AWS S3 storage (data lake)
-- Open the Makefile, enter your AWS details on lines 11-13
+### 1) Setup Terraform
+* Navigate to 'terraform' directory and follow the instructions in the Makefile   
 
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-AWS_DEFAULT_REGION=us-west-2
+### 2) Test, Build, and Deploy Lambda Package
+* Navigate to 'containers/lambda' directory and follow the instructions in the Makefile  
 
-# 3) Test scraper in local Lambda environment
-(where Makefile and Dockerfile are located)
-
-1. make docker-build
-
-2. make docker-run
-
-3. make docker-test
-
-4. If previous step successful: make build-lambda-package
-
-# 4) Deploy code to AWS Lambda (web scraping)
-# ref: https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
-
-- Go to AWS Lambda page > Create Function > Author from scratch
-
-- Function-name: indeed-web-scraper, Runtime: Python, Architecture: x86_64, Execution Role: Create a new existing role from AWS policy templates, Role name: scraper, Policy templates: Basic Lambda@Edge permissions
-
-- Add trigger > CloudWatch Events > Create a new rule
-
-- Rule name: dailyscraper, Rule description: Run at 12 p.m. EST every day, Rule type: Schedule Expression, Schedule Expression: cron(0 18 ? * MON-FRI *)
-
-- Go to 'Configuration' tab > Edit > Add Environmental Variable x2
-
-- PATH = /var/task/bin, PYTHONPATH = /var/task/src:/var/task/lib
-
-- Go to 'General configuration' > Edit > Memory: 1200MB
-
-- Go to IAM > Roles > 'scraper' > Add permissions > Attach policies > 'AmazonS3FullAccess'
-
-- Go to Upload from > .zip file > upload 'build.zip' and save
-
-- Locate Runtime settings > Edit > Handler: etl.indeed_scraper
-
-- How do we run it??? Under 'Test'?
+### 3) Test, Build, and Deploy Airflow Package
+* TBD
