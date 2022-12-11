@@ -12,6 +12,8 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 * Docker
 * Terraform
 
+![My_Image](diagram.jpg)
+
 ## Overview of Terraform
 
 An infrastructure-as-code (the process of managing and provisioning computer data centers through code instead of manual processes) tool that lets you define both cloud and on-premise resources in human-readable configuration files that you can version, reuse, and share. You can then use a consistent workflow to provision and manage all of your infrastructure throughout its lifecycle.
