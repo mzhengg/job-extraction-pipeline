@@ -56,10 +56,11 @@ Apache Airflow is the most popular data workflow orchestration tool.
 ## How to Setup and Deploy Dashboard
 
 ### 1) Setup Terraform
-* Navigate to 'terraform' directory and follow the instructions in the Makefile   
+* Navigate to 'terraform' directory and follow the instructions in the Makefile - INCOMPLETE 
 
 ### 2) Test, Build, and Deploy Lambda Package
-* Navigate to 'containers/lambda' directory and follow the instructions in the Makefile  
+* Navigate to 'containers/lambda' directory and follow the instructions in the Makefile - INCOMPLETE
 
 ### 3) Test, Build, and Deploy Airflow Package
-* TBD
+
+Airflow is used to orchestrate the web crawler. Every week, the data pipeline (containers/airflow/dags/etl.py) will scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake where transformations will be performed further down the pipeline. The DAG was developed and tested on a local machine. Then, the DAG was containerized and uploaded to an AWS EC2 instance.
