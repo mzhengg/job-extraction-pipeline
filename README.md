@@ -56,11 +56,48 @@ Apache Airflow is the most popular data workflow orchestration tool.
 ## How to Setup and Deploy Dashboard
 
 ### 1) Setup Terraform
-* Navigate to 'terraform' directory and follow the instructions in the Makefile - INCOMPLETE 
 
-### 2) Test, Build, and Deploy Lambda Package
+Terraform was used to manage the AWS infrastructure. Please navigate to the 'terraform' directory and follow the instructions in the Makefile.  
+
+### 2) Test and Deploy Lambda Package
 * Navigate to 'containers/lambda' directory and follow the instructions in the Makefile - INCOMPLETE
 
-### 3) Test, Build, and Deploy Airflow Package
+### 3) Test and Deploy Airflow DAG to AWS MWAA
 
-Airflow is used to orchestrate the web crawler. Every week, the data pipeline (containers/airflow/dags/etl.py) will scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake where transformations will be performed further down the pipeline. The DAG was developed and tested on a local machine. Then, the DAG was containerized and uploaded to an AWS EC2 instance.
+Airflow is used to orchestrate the web crawler. Every week, the data pipeline will scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake where transformations will be performed further down the pipeline. The DAG was developed and tested on a local machine using the aws-mwaa-local-runner (https://github.com/aws/aws-mwaa-local-runner). Then, the DAG was uploaded to a AWS MWAA environment.
+
+By default, the DAG only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 20 pages of that one job every week.  
+
+#### Testing DAG using the AWS MWAA CLI
+
+1. Build the Docker container image using the following command:
+```bash
+./mwaa-local-env build-image
+```
+
+2. Runs a local Apache Airflow environment that is a close representation of MWAA by configuration.
+
+```bash
+./mwaa-local-env start
+```
+
+To stop the local environment, Ctrl+C on the terminal and wait until the local runner and the postgres containers are stopped.
+
+3. Access the Airflow UI
+
+By default, the `bootstrap.sh` script creates a username and password for your local Airflow environment.
+
+- Username: `admin`
+- Password: `test`
+- Open the Apache Airlfow UI: <http://localhost:8080/>.
+
+4. Add DAGs and supporting files
+
+- Add DAG code to the `dags/` folder.
+- Add Python dependencies to `requirements/requirements.txt`.
+    * To test a requirements.txt without running Apache Airflow, use the following script:
+
+    ```bash
+    ./mwaa-local-env test-requirements
+    ```
+- Add custom plugins to the `plugins/` folder.
