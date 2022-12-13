@@ -1,11 +1,11 @@
-# Skills Gap Dashboard
+# Job Extraction Pipeline
 
-Software engineering is one of the most in-demand, highest paying jobs currently. There's lots of room for growth and the industry is expected to grow by 25% through the next decade according to the Bureau of Labor Statistics (https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm). But this industry is constantly changing and new tools are being developed all the time. This project aims to track the most sought after technologies by the industry so that aspiring software engineers can keep up to date with them.  
+Software engineering is one of the most in-demand, highest paying jobs currently. There's lots of room for growth and the industry is expected to grow by 25% through the next decade according to the Bureau of Labor Statistics (https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm). But this industry is constantly changing and new positions are opening up all the time. This project aims to track the number of positions open for the various specialities within software engineering so that aspiring software engineers can pivot into growing fields, learn the necessary skills, and get a job with a good growth outlook.
 
 ## Technologies:
 
 * Python (Selenium, Boto3, PySpark)
-* AWS (S3, Lambda, MWAA, Redshift, Elastic Beanstalk)
+* AWS (S3, Fargate, MWAA, Redshift)
 * Airflow
 * Docker
 * Terraform
@@ -88,9 +88,9 @@ terraform apply
 terraform destroy
 ```
 
-### 2) Test and Deploy Lambda Package
+### 2) Test and Deploy Container to AWS Fargate
 
-AWS Lambda is used to execute the lambda function that will:
+AWS Fargate is used to host and execute a container that will:
     - Scrape Indeed.com using Selenium and Python
     - Upload the raw job postings to AWS S3
     - Transform the raw data using PySpark
@@ -98,7 +98,7 @@ AWS Lambda is used to execute the lambda function that will:
 
 By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 20 pages of that one job every week.  
 
-I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda  
+At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container that runs Chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though I won't be using AWS Lambda, this Dockerfile provides a convenient way to Dockerize my selenium web crawler for deployment to AWS Fargate.
 
 #### Steps
 
@@ -119,48 +119,12 @@ docker run \
     scraper:latest
 ```
 
-3. Test the lambda function in the container with inputs
-```bash
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"0": ["data analyst", "boston", "1"], "1": ["data scientist", "new york", "1"]}'
-```
-
-4. Delete the image and container (when they are no longer needed)
+3. Delete the image and container (when they are no longer needed)
 ```bash
 docker kill scraper
 docker rm scraper
 docker image rm scraper:latest
 ```
-
-5. Build the lambda deployment package (when finished testing)
-    - Install chromedriver and headless-chrome
-    ```bash
-    mkdir -p bin/
-
-    curl -SL https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip > chromedriver.zip
-    unzip chromedriver.zip -d bin/
-
-    curl -SL https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-37/stable-headless-chromium-amazonlinux-2017-03.zip > headless-chromium.zip
-    unzip headless-chromium.zip -d bin/
-
-    rm headless-chromium.zip chromedriver.zip
-    ```
-
-    - Install Python dependencies
-    ```bash
-    mkdir -p lib/
-    python3 -m pip install -r requirements.txt -t lib/.
-    ```
-
-    - Build zip file to be uploaded to AWS Lambda
-    ```bash
-    mkdir build
-    cp -r src build/.
-    cp -r bin build/.
-    cp -r lib build/.
-    cd build; zip -9qr build.zip .
-    cp build/build.zip .
-    rm -rf build
-    ```
 
 ### 3) Test and Deploy Airflow DAG to AWS MWAA
 

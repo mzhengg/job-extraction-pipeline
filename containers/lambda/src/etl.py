@@ -28,6 +28,9 @@ options.add_argument("--remote-debugging-port=9222")
 # get from terraform directory: "mzheng-${var.aws_s3_bucket}"
 bucket_name = 'mzheng-indeed-job-posts'
 
+# jobs to scrape
+jobs = [['software engineer', '', 1]]
+
 def get_page_links(job, location, no_of_pages):
     # modify url to include job
     job = job.replace(' ', '%20')
@@ -110,16 +113,20 @@ def upload_to_s3(job_links, bucket_name, directory):
         response = client.put_object(Bucket=bucket_name, Body=scraped_posting, Key=f'{directory}/{file_name}.txt')
 
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
-# 'context' here is just a placeholder parameter
-def indeed_scraper(event, context=None):
+# 'event' and 'context' are just placeholder parameters
+def indeed_scraper(event, context):
     # scrape postings for each 'job' type
-    for i in range(len(event)):
-        page_links = get_page_links(event[str(i)][0], event[str(i)][1], int(event[str(i)][2]))
+    for job in jobs:
+        page_links = get_page_links(job[0], job[1], job[2])
         job_links = get_job_links(page_links)
-        upload_to_s3(job_links, bucket_name, event[str(i)][0])
+        upload_to_s3(job_links, bucket_name, job[0])
     
     return "Scraper runs without issue!"
 
 if __name__ == '__main__':
-    # the parameters are passed to the function when we use the lambda emulator via the command line
+    # normally, the parameters are passed to the function when we use the lambda emulator via the command line
+    # however, we simply pass in the 'jobs' variable of this script into the function and ignore 'event' and 'context'
+    event = None
+    context = None
+    
     indeed_scraper(event, context)
