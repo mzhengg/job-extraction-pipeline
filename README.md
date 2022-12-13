@@ -1,13 +1,11 @@
 # Skills Gap Dashboard
 
-This is an end-to-end project showcasing my skills as an aspiring Software Engineer (Data Engineer).  
-
 Software engineering is one of the most in-demand, highest paying jobs currently. There's lots of room for growth and the industry is expected to grow by 25% through the next decade according to the Bureau of Labor Statistics (https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm). But this industry is constantly changing and new tools are being developed all the time. This project aims to track the most sought after technologies by the industry so that aspiring software engineers can keep up to date with them.  
 
 ## Technologies:
 
 * Python (Selenium, Boto3, PySpark)
-* AWS (S3, Lambda, EC2, Redshift, Elastic Beanstalk)
+* AWS (S3, Lambda, MWAA, Redshift, Elastic Beanstalk)
 * Airflow
 * Docker
 * Terraform
@@ -55,20 +53,123 @@ Apache Airflow is the most popular data workflow orchestration tool.
 
 ## How to Setup and Deploy Dashboard
 
-### 1) Setup Terraform
+### 1) Setup Infrastucture using Terraform
 
-Terraform was used to manage the AWS infrastructure. Please navigate to the 'terraform' directory and follow the instructions in the Makefile.  
+Terraform is used to set up the AWS infrastructure.  
+
+#### Steps
+
+1. Get AWS keys by following these steps:
+    - sign into AWS console
+    - click on username
+    - click on security credentials
+    - create access key
+
+2. Set these environment variables (these are dummy keys, replace them with your own before executing):
+
+```bash
+export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY  
+```
+
+3. Build infrastructure by executing these commands in order:
+```bash
+terraform init
+```
+```bash
+terraform plan
+```
+```bash
+terraform apply
+```
+
+4. Destroy the infrastructure (when they are no longer needed):
+```bash
+terraform destroy
+```
+
+#### AWS Management Console
+
 
 ### 2) Test and Deploy Lambda Package
-* Navigate to 'containers/lambda' directory and follow the instructions in the Makefile - INCOMPLETE
 
-### 3) Test and Deploy Airflow DAG to AWS MWAA
+AWS Lambda is used to execute the lambda function that will:
+    - Scrape Indeed.com using Selenium and Python
+    - Upload the raw job postings to AWS S3
+    - Transform the raw data using PySpark
+    - Store the structured data in AWS Redshift  
 
-Airflow is used to orchestrate the web crawler. Every week, the data pipeline will scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake where transformations will be performed further down the pipeline. The DAG was developed and tested on a local machine using the aws-mwaa-local-runner (https://github.com/aws/aws-mwaa-local-runner). Then, the DAG was uploaded to a AWS MWAA environment.
+By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 20 pages of that one job every week.  
 
-By default, the DAG only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 20 pages of that one job every week.  
+I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda  
 
-#### Testing DAG using the AWS MWAA CLI
+#### Steps
+
+1. Build the image:
+```bash
+docker build . \
+	--tag scraper:latest
+```
+
+2. Run the container (build container from image)
+```bash
+docker run \
+    -p 9000:8080 \
+    --name scraper \
+    -e AWS_ACCESS_KEY_ID=AKIAUTIELVA45LLIQPAH \
+    -e AWS_SECRET_ACCESS_KEY=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 \
+    -e AWS_DEFAULT_REGION=us-west-2 \
+    scraper:latest
+```
+
+3. Test the lambda function in the container with inputs
+```bash
+	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"0": ["data analyst", "boston", "1"], "1": ["data scientist", "new york", "1"]}'
+```
+
+4. Delete the image and container (when they are no longer needed)
+```bash
+docker kill scraper
+docker rm scraper
+docker image rm scraper:latest
+```
+
+5. Build the lambda deployment package (when finished testing)
+    - Install chromedriver and headless-chrome
+    ```bash
+    mkdir -p bin/
+
+    curl -SL https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip > chromedriver.zip
+    unzip chromedriver.zip -d bin/
+
+    curl -SL https://github.com/adieuadieu/serverless-chrome/releases/download/v1.0.0-37/stable-headless-chromium-amazonlinux-2017-03.zip > headless-chromium.zip
+    unzip headless-chromium.zip -d bin/
+
+    rm headless-chromium.zip chromedriver.zip
+    ```
+
+    - Install Python dependencies
+    ```bash
+    mkdir -p lib/
+    python3 -m pip install -r requirements.txt -t lib/.
+    ```
+
+    - Build zip file to be uploaded to AWS Lambda
+    ```bash
+    mkdir build
+    cp -r src build/.
+    cp -r bin build/.
+    cp -r lib build/.
+    cd build; zip -9qr build.zip .
+    cp build/build.zip .
+    rm -rf build
+    ```
+
+### 3) Test and Deploy Airflow DAG to AWS EC2
+
+Airflow is used to orchestrate the lambda function. Every week, the DAG will trigger the data pipeline to scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake. Then the raw data will be transformed using PySpark and uploaded to AWS Redshift. The DAG was developed and tested on a local machine using https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
+
+#### Steps
 
 1. Build the Docker container image using the following command:
 ```bash
@@ -76,12 +177,11 @@ By default, the DAG only scrapes one type of job: Software Engineer. In the futu
 ```
 
 2. Runs a local Apache Airflow environment that is a close representation of MWAA by configuration.
-
 ```bash
 ./mwaa-local-env start
 ```
 
-To stop the local environment, Ctrl+C on the terminal and wait until the local runner and the postgres containers are stopped.
+*To stop the local environment, Ctrl+C on the terminal and wait until the local runner and the postgres containers are stopped.*
 
 3. Access the Airflow UI
 
@@ -96,7 +196,6 @@ By default, the `bootstrap.sh` script creates a username and password for your l
 - Add DAG code to the `dags/` folder.
 - Add Python dependencies to `requirements/requirements.txt`.
     * To test a requirements.txt without running Apache Airflow, use the following script:
-
     ```bash
     ./mwaa-local-env test-requirements
     ```
