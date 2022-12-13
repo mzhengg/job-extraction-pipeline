@@ -108,13 +108,13 @@ docker build . \
 	--tag scraper:latest
 ```
 
-2. Run the container (build container from image)
+2. Run the image (these are dummy keys, replace them with your own before executing)
 ```bash
 docker run \
     -p 9000:8080 \
     --name scraper \
-    -e AWS_ACCESS_KEY_ID=AKIAUTIELVA45LLIQPAH \
-    -e AWS_SECRET_ACCESS_KEY=X5nOOMkoFMcj+vSiS29Fm3KO9ioGXogrTynUCAvR \
+    -e AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
+    -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
     -e AWS_DEFAULT_REGION=us-west-2 \
     scraper:latest
 ```
