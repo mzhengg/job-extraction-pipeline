@@ -88,9 +88,6 @@ terraform apply
 terraform destroy
 ```
 
-#### AWS Management Console
-
-
 ### 2) Test and Deploy Lambda Package
 
 AWS Lambda is used to execute the lambda function that will:
