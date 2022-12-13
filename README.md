@@ -165,7 +165,7 @@ docker image rm scraper:latest
     rm -rf build
     ```
 
-### 3) Test and Deploy Airflow DAG to AWS EC2
+### 3) Test and Deploy Airflow DAG to AWS MWAA
 
 Airflow is used to orchestrate the lambda function. Every week, the DAG will trigger the data pipeline to scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake. Then the raw data will be transformed using PySpark and uploaded to AWS Redshift. The DAG was developed and tested on a local machine using https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
 
