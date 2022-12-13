@@ -121,7 +121,7 @@ docker run \
 
 3. Test the lambda function in the container with inputs
 ```bash
-	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"0": ["data analyst", "boston", "1"], "1": ["data scientist", "new york", "1"]}'
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"0": ["data analyst", "boston", "1"], "1": ["data scientist", "new york", "1"]}'
 ```
 
 4. Delete the image and container (when they are no longer needed)
