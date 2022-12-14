@@ -4,7 +4,7 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 
 ## Technologies:
 
-* Python (Selenium, Boto3, PySpark)
+* Python (Selenium, Boto3)
 * AWS (S3, Fargate, MWAA, Redshift)
 * Airflow
 * Docker
@@ -96,7 +96,7 @@ AWS Fargate is used to host and execute a container that will:
     - Transform the raw data using PySpark
     - Store the structured data in AWS Redshift  
 
-By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 20 pages of that one job every week.  
+By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 10 pages of that one job every week.  
 
 At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container that runs Chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though I won't be using AWS Lambda, this Dockerfile provides a convenient way to Dockerize my selenium web crawler for deployment to AWS Fargate.
 

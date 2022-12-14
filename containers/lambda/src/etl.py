@@ -1,6 +1,6 @@
 import random
 import string
-
+from datetime import date
 from tempfile import mkdtemp
 
 from selenium import webdriver
@@ -98,10 +98,16 @@ def scraper(job_link):
     return job_info
 
 def upload_to_s3(job_links, bucket_name, directory):
+    # list of scraped job posts
+    job_posts = []
+
     # scrape information from each job post
-    for link in job_links:
+    for link in job_links[:2]:
         # file to be uploaded
         scraped_posting = scraper(link)
+
+        # append 'scraped_posting' to 'job_posts' for processing later
+        job_posts.append(scraped_posting)
 
         # file name for scraped posting
         file_name = ''.join(random.choices(string.ascii_letters, k=10))
@@ -111,6 +117,30 @@ def upload_to_s3(job_links, bucket_name, directory):
 
         # uploads file to s3 bucket
         response = client.put_object(Bucket=bucket_name, Body=scraped_posting, Key=f'{directory}/{file_name}.txt')
+    
+    return job_posts
+
+def transformer(job_posts):
+    # list of cleaned job posts
+    processed_job_posts = []
+
+    # transform each job post
+    for job_post in job_posts:
+        # list containing information about given job post
+        job = []
+
+        # split job_post by new line character
+        job_post = job_post.split('\n')
+
+        # get job title
+        job.append(job_post[12])
+
+        # get scraped date (DD/MM/YYYY)
+        today = date.today()
+        job.append(today.strftime("%d/%m/%Y"))
+        
+        # append job info to processed_job_posts
+        processed_job_posts.append(job)
 
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
 # 'event' and 'context' are just placeholder parameters
@@ -119,14 +149,13 @@ def indeed_scraper(event, context):
     for job in jobs:
         page_links = get_page_links(job[0], job[1], job[2])
         job_links = get_job_links(page_links)
-        upload_to_s3(job_links, bucket_name, job[0])
-    
-    return "Scraper runs without issue!"
+        job_posts = upload_to_s3(job_links, bucket_name, job[0])
+        transformer(job_posts)
 
 if __name__ == '__main__':
     # normally, the parameters are passed to the function when we use the lambda emulator via the command line
     # however, we simply pass in the 'jobs' variable of this script into the function and ignore 'event' and 'context'
     event = None
     context = None
-    
-    indeed_scraper(event, context)
+
+    #indeed_scraper(event, context)
