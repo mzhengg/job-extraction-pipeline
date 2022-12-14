@@ -102,7 +102,7 @@ def upload_to_s3(job_links, bucket_name, directory):
     job_posts = []
 
     # scrape information from each job post
-    for link in job_links[:2]:
+    for link in job_links:
         # file to be uploaded
         scraped_posting = scraper(link)
 
@@ -142,6 +142,11 @@ def transformer(job_posts):
         # append job info to processed_job_posts
         processed_job_posts.append(job)
 
+    return processed_job_posts
+
+def upload_to_redshift(processed_job_posts):
+    pass
+
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
 # 'event' and 'context' are just placeholder parameters
 def indeed_scraper(event, context):
@@ -150,7 +155,8 @@ def indeed_scraper(event, context):
         page_links = get_page_links(job[0], job[1], job[2])
         job_links = get_job_links(page_links)
         job_posts = upload_to_s3(job_links, bucket_name, job[0])
-        transformer(job_posts)
+        processed_job_posts = transformer(job_posts)
+        upload_to_redshift(processed_job_posts)
 
 if __name__ == '__main__':
     # normally, the parameters are passed to the function when we use the lambda emulator via the command line
