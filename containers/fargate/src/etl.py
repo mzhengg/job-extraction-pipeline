@@ -182,10 +182,8 @@ def upload_to_redshift(processed_job_posts):
         query = f"INSERT INTO Jobs (Job_Title, Scraped_Date) VALUES ('{processed_job_post[0]}', '{processed_job_post[1]}');"
         cursor.execute(query)
 
-    cursor.execute('SELECT * FROM Jobs;')
-    print(cursor.fetchall())
-
-    print("Successful!")
+    # cursor.execute('SELECT * FROM Jobs;')
+    # print(cursor.fetchall())
 
     connection.close()
 
