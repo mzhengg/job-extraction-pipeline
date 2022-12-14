@@ -3,6 +3,7 @@ import string
 from datetime import date
 from tempfile import mkdtemp
 from io import StringIO
+import os
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -32,16 +33,16 @@ options.add_argument("--remote-debugging-port=9222")
 
 # get from variables.tf: "aws_s3_bucket_name"
 bucket_name = 'mzheng-indeed-s3'
-# # get from variables.tf: "aws_redshift_db_name"
-# db_name = 'jobs'
+# get from variables.tf: "aws_redshift_db_name"
+db_name = 'jobs'
 # get from variables.tf: "aws_redshift_master_username"
-username = 'admin_admin'
+username = os.getenv('AWS_REDSHIFT_MASTER_USERNAME')
 # get from variables.tf: "aws_redshift_master_password"
-password = 'Admin!123'
-# # get from AWS console -> Redshift -> Clusters -> Port
-# port = '5439'
-# get from AWS console -> Redshift -> Clusters -> Endpoint
-host = 'mzheng-indeed-redshift.cm5xc4oyddys.us-west-2.redshift.amazonaws.com:5439/jobs'
+password = os.getenv('AWS_REDSHIFT_MASTER_PASSWORD')
+# get from AWS console -> Redshift -> Clusters -> Port
+port = '5439'
+# get from AWS console -> Redshift -> Clusters -> Endpoint (remove port and db)
+host = 'mzheng-indeed-redshift.cm5xc4oyddys.us-west-2.redshift.amazonaws.com'
 
 # jobs to scrape
 jobs = [['software engineer', '', 1]]
@@ -161,7 +162,7 @@ def upload_to_s3_and_transform(job_links, bucket_name, directory):
 
 def s3_to_redshift():
     # connection information
-    connection_string = f"user={username} password={password} host={host}"
+    connection_string = f"dbname={db_name} port={port} user={username} password={password} host={host}"
 
     # establish connection to redshift
     connection = psycopg2.connect(connection_string)

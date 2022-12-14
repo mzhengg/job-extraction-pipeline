@@ -83,6 +83,8 @@ terraform plan
 terraform apply
 ```
 
+*When you build a redshift cluster, you will be prompted to make a master username and password for accessing the cluster. Store this information in a secure place as you will need to access this again later. I've chosen to make a .env file in the working directory, that I do not upload to the repo for security reasons, to store information about my AWS access keys and Redshift credentials.*
+
 4. Destroy the infrastructure (when they are no longer needed):
 ```bash
 terraform destroy
@@ -108,6 +110,10 @@ The job links are given to `upload_to_s3_and_transform` to do 3 things. Firstly,
 
 Now that all the data is stored in s3, we call `s3_to_redshift` to transfer only the csv files to redshift to make the data queryable and retrievable by the Metabase dashboard.
 
+AWS Redshift is essentially a PostgreSQL database. Thus, I use psycopg2 to connect to the redshift cluster. In order to do this, we need to give it 5 parameters: database name, port, master username, master password, and the host name. The database name, master username, and master password can be obtained from the `variables.tf` file when we used terraform to build the redshift cluster. The port can be obtained by going to AWS console -> Redshift -> Clusters -> Port. The host name can be obtained by going to AWS console -> Redshift -> Clusters -> Endpoint (make sure to remove the port and database name from the endpoint URL).
+
+The username and password cannot be exposed for security reasons. Therefore, I pass them in along with the AWS access keys when I run the container using the information in the .env file that I, once again, did not upload.
+
 #### Steps
 
 1. Build the image:
@@ -116,7 +122,7 @@ docker build . \
 	--tag scraper:latest
 ```
 
-2. Run the image (these are dummy keys, replace them with your own before executing)
+2. Run the image (these are dummy keys and credentials, replace them with your own before executing using the information contained in the .env file)
 ```bash
 docker run \
     -p 9000:8080 \
@@ -124,6 +130,8 @@ docker run \
     -e AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
     -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
     -e AWS_DEFAULT_REGION=us-west-2 \
+    -e AWS_REDSHIFT_MASTER_USERNAME=EXAMPLE_USERNAME \
+    -e AWS_REDSHIFT_MASTER_PASSWORD=EXAMPLE_PASSWORD \
     scraper:latest
 ```
 

@@ -19,13 +19,11 @@ variable "aws_redshift_db_name" {
 variable "aws_redshift_master_username" {
   description = "redshift master username"
   type = string
-  default = "admin_admin"
 }
 
 variable "aws_redshift_master_password" {
   description = "redshift master passsword"
   type = string
-  default = "Admin!123"
 }
 
 variable "aws_redshift_node_type" {
