@@ -13,7 +13,7 @@ variable "aws_redshift_cluster_id" {
 variable "aws_redshift_db_name" {
   description = "redshift database name"
   type = string
-  default = "jobs"
+  default = "Jobs"
 }
 
 variable "aws_redshift_master_username" {

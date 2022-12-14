@@ -79,16 +79,35 @@ terraform init
 ```bash
 terraform plan
 ```
+*When you build a redshift cluster, you will be prompted to make a master username and password for accessing the cluster. Store this information in a secure place as you will need to access this again later. I've chosen to make a .env file in the working directory, that I do not upload to the repo for security reasons, to store information about my AWS access keys and Redshift credentials.*
 ```bash
 terraform apply
 ```
-
-*When you build a redshift cluster, you will be prompted to make a master username and password for accessing the cluster. Store this information in a secure place as you will need to access this again later. I've chosen to make a .env file in the working directory, that I do not upload to the repo for security reasons, to store information about my AWS access keys and Redshift credentials.*
 
 4. Destroy the infrastructure (when they are no longer needed):
 ```bash
 terraform destroy
 ```
+
+If any issues arise when you try to destroy the infrastructure using the above command, then go into the AWS console and destroy them manually. However, if you do this, then you have to delete all the files in the `terraform` folder except for `main.tf` and `variables.tf` to remove any history of previous infrastructure builds.  
+
+Now, go to AWS Redshift in the console and locate your cluster. Retrieve information about the database name, port, and host name (endpoint URL - remove the database and port from the URL) and add it to the .env because it will be used in the next part  
+
+IMPORTANT: When you create an Amazon Redshift cluster, it is locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:  
+
+* Go to the AWS Console -> Redshift -> Cluster and click on the VPC security group
+* Click on `Inbound rules` and then click `Edit Inbound rules`
+* `Add rule` and select the following for the new rules: Type = `All traffic`, Source: `0.0.0.0/0`.  
+
+And that's it, the Redshift cluster should now be accessible via pyscopg2 in the following part.  
+
+Now, you must create an IAM user in order to run queries in a Redshift cluster. To do this, follow these steps:
+
+* Go to the AWS Console -> Redshift -> Clusters -> Associated IAM roles
+* Click on `Manage IAM roles`, select `Any S3 bucket`, and select `Create IAM role as default`
+* This IAM role will have full command access to Redshift and be able to access any S3 bucket (generally this is not recommended, but for the purposes of this project it is fine)
+
+Redshift is now fully setup!
 
 ### 2) Test and Deploy Container to AWS Fargate
 
@@ -110,9 +129,9 @@ The job links are given to `upload_to_s3_and_transform` to do 3 things. Firstly,
 
 Now that all the data is stored in s3, we call `s3_to_redshift` to transfer only the csv files to redshift to make the data queryable and retrievable by the Metabase dashboard.
 
-AWS Redshift is essentially a PostgreSQL database. Thus, I use psycopg2 to connect to the redshift cluster. In order to do this, we need to give it 5 parameters: database name, port, master username, master password, and the host name. The database name, master username, and master password can be obtained from the `variables.tf` file when we used terraform to build the redshift cluster. The port can be obtained by going to AWS console -> Redshift -> Clusters -> Port. The host name can be obtained by going to AWS console -> Redshift -> Clusters -> Endpoint (make sure to remove the port and database name from the endpoint URL).
+AWS Redshift is essentially a PostgreSQL database. Thus, I use psycopg2 to connect to the redshift cluster. In order to do this, we need to give it 5 parameters: database name, port, master username, master password, and the host name. These parameters are located in the .env file that we generated earlier.
 
-The username and password cannot be exposed for security reasons. Therefore, I pass them in along with the AWS access keys when I run the container using the information in the .env file that I, once again, did not upload.
+The username, password, and AWS access keys cannot be exposed for security reasons. Therefore, I pass them in along with the other information needed to connect to the databse when I run the container.
 
 #### Steps
 
@@ -132,6 +151,10 @@ docker run \
     -e AWS_DEFAULT_REGION=us-west-2 \
     -e AWS_REDSHIFT_MASTER_USERNAME=EXAMPLE_USERNAME \
     -e AWS_REDSHIFT_MASTER_PASSWORD=EXAMPLE_PASSWORD \
+    -e AWS_REDSHIFT_DATABASE_NAME=DATABASE \
+    -e AWS_REDSHIFT_PORT=PORT \
+    -e AWS_REDSHIFT_HOST=HOST \
+    -e AWS_S3_BUCKET_NAME=BUCKET_NAME \
     scraper:latest
 ```
 

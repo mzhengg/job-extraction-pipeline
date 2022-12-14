@@ -32,17 +32,17 @@ options.add_argument(f"--disk-cache-dir={mkdtemp()}")
 options.add_argument("--remote-debugging-port=9222")
 
 # get from variables.tf: "aws_s3_bucket_name"
-bucket_name = 'mzheng-indeed-s3'
+bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
 # get from variables.tf: "aws_redshift_db_name"
-db_name = 'jobs'
+db_name = os.getenv('AWS_REDSHIFT_DATABASE_NAME')
 # get from variables.tf: "aws_redshift_master_username"
 username = os.getenv('AWS_REDSHIFT_MASTER_USERNAME')
 # get from variables.tf: "aws_redshift_master_password"
 password = os.getenv('AWS_REDSHIFT_MASTER_PASSWORD')
 # get from AWS console -> Redshift -> Clusters -> Port
-port = '5439'
+port = os.getenv('AWS_REDSHIFT_PORT')
 # get from AWS console -> Redshift -> Clusters -> Endpoint (remove port and db)
-host = 'mzheng-indeed-redshift.cm5xc4oyddys.us-west-2.redshift.amazonaws.com'
+host = os.getenv('AWS_REDSHIFT_HOST')
 
 # jobs to scrape
 jobs = [['software engineer', '', 1]]
@@ -126,7 +126,7 @@ def upload_to_s3_and_transform(job_links, bucket_name, directory):
     scraped_date = None
 
     # scrape information from each job post
-    for link in job_links[:2]:
+    for link in job_links:
         # raw file to be uploaded
         scraped_posting = scraper(link)
 
