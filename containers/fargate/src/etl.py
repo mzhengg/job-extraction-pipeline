@@ -32,14 +32,14 @@ options.add_argument("--remote-debugging-port=9222")
 
 # get from variables.tf: "aws_s3_bucket_name"
 bucket_name = 'mzheng-indeed-s3'
-# get from variables.tf: "aws_redshift_db_name"
-db_name = 'jobs'
+# # get from variables.tf: "aws_redshift_db_name"
+# db_name = 'jobs'
 # get from variables.tf: "aws_redshift_master_username"
 username = 'admin_admin'
 # get from variables.tf: "aws_redshift_master_password"
 password = 'Admin!123'
-# get from AWS console -> Redshift -> Clusters -> Port
-port = '5439'
+# # get from AWS console -> Redshift -> Clusters -> Port
+# port = '5439'
 # get from AWS console -> Redshift -> Clusters -> Endpoint
 host = 'mzheng-indeed-redshift.cm5xc4oyddys.us-west-2.redshift.amazonaws.com:5439/jobs'
 
@@ -161,7 +161,7 @@ def upload_to_s3_and_transform(job_links, bucket_name, directory):
 
 def s3_to_redshift():
     # connection information
-    connection_string = f"dbname={db_name} port={port} user={username} password={password} host={host}"
+    connection_string = f"user={username} password={password} host={host}"
 
     # establish connection to redshift
     connection = psycopg2.connect(connection_string)
@@ -172,14 +172,16 @@ def s3_to_redshift():
     # SQL query
     cursor.execute()
 
+    print("Successful!")
+
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
 # 'event' and 'context' are just placeholder parameters
 def indeed_scraper(event, context):
     # scrape postings for each 'job' type
     for job in jobs:
-        page_links = get_page_links(job[0], job[1], job[2])
-        job_links = get_job_links(page_links)
-        upload_to_s3_and_transform(job_links, bucket_name, job[0])
+        #page_links = get_page_links(job[0], job[1], job[2])
+        #job_links = get_job_links(page_links)
+        #upload_to_s3_and_transform(job_links, bucket_name, job[0])
         s3_to_redshift()
 
 if __name__ == '__main__':

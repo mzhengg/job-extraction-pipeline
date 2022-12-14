@@ -55,7 +55,7 @@ Apache Airflow is the most popular data workflow orchestration tool.
 
 ### 1) Setup Infrastucture using Terraform
 
-Terraform is used to set up the AWS infrastructure.  
+Terraform is used to set up the AWS infrastructure (S3, Fargate, MWAA, Redshift).  
 
 #### Steps
 
@@ -100,7 +100,13 @@ By default, the script only scrapes one type of job: Software Engineer. In the f
 
 At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container that runs Chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though I won't be using AWS Lambda, this Dockerfile provides a convenient way to Dockerize my selenium web crawler for deployment to AWS Fargate.
 
-First the `get_page_links` function is executed which takes 3 parameters: job, location, and number of pages. It takes these parameters and grabs the links to each page that is to be scraped.  
+First the `get_page_links` function is executed which takes 3 parameters: job, location, and number of pages. It takes these parameters and generates the Indeed links to each page that is to be scraped.  
+
+Within each page or the links to each job posting, thus the page links retrieved above are then given to the `get_job_links` function to grab each job link.  
+
+The job links are given to `upload_to_s3_and_transform` to do 3 things. Firstly, the function will iterate through each job link and call the `scraper` function to extract all the text from the given job post. It will save the job post as a text file to an s3 bucket under the raw/ folder as these have not been pre-processed. Then, the job title from the job post is extracted and the date that the post is scraped is appended to a dataframe that will be saved as a csv containing all the job posts to an s3 bucket under the processed/ folder. To put an object, the text files, to s3 was straight forward. All that was needed was a put_object function. However, to put a csv file required me to first store the csv (pandas dataframe) in a temporary location using StringIO() and then retrieve that value when calling the put_object function to upload it to s3.
+
+Now that all the data is stored in s3, we call `s3_to_redshift` to transfer only the csv files to redshift to make the data queryable and retrievable by the Metabase dashboard.
 
 #### Steps
 
