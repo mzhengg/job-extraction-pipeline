@@ -113,55 +113,55 @@ def scraper(job_link):
 
     return job_info
 
-def upload_to_s3_and_transform(job_links, bucket_name, directory):
-    ### upload_to_s3 ###
-
+def upload_to_s3(job_links, bucket_name, directory):
     # connection to s3
     s3_client = boto3.client('s3')
 
-    # dataframe containing processed job posts
-    df = pd.DataFrame(columns=['Job Title', 'Scraped Date'])
-
-    # scraped date for keeping track of csv later
-    scraped_date = None
+    # list of scraped job postings
+    job_posts = []
 
     # scrape information from each job post
     for link in job_links:
         # raw file to be uploaded
         scraped_posting = scraper(link)
 
+        # append scraped_posting to job_posts for further processing later
+        job_posts.append(scraped_posting)
+
         # file name for scraped posting
         file_name = ''.join(random.choices(string.ascii_letters, k=20))
 
         # uploads raw job post file to s3 bucket
-        s3_client.put_object(Bucket=bucket_name, Body=scraped_posting, Key=f'{directory}/raw/{file_name}.txt')
+        s3_client.put_object(Bucket=bucket_name, Body=scraped_posting, Key=f'{directory}/{file_name}.txt')
     
-        ### transform ###
+    return job_posts
 
-        # split scraped_posting by new line character
-        scraped_posting = scraped_posting.split('\n')
+def transformer(job_posts):
+    # list of processed job posts
+    processed_job_posts = []
+
+    # process each job_post
+    for job_post in job_posts:
+        # split job_post by new line character
+        job_post = job_post.split('\n')
 
         # get job title
-        job_title = scraped_posting[12]
+        job_title = job_post[12]
 
         # get scraped date (DD/MM/YYYY)
         today = date.today()
-        scraped_date = today.strftime("%d/%m/%Y")
+        scraped_date = today.strftime("%Y/%m/%d")
         
         # dataframe containing job information
-        job_info = {'Job Title': job_title, 'Scraped Date': scraped_date}
+        job_info = [job_title, scraped_date]
 
-        # append job_info to df
-        df = df.append(job_info, ignore_index=True)
-    
-    # upload df to s3 as a csv containing structured job posts data
-    temporary_csv_storage = StringIO()
-    df.to_csv(temporary_csv_storage)
-    scraped_date = scraped_date.replace('/', '-') # to fix directory issues
-    s3_client.put_object(Bucket=bucket_name, Body=temporary_csv_storage.getvalue(), Key=f'{directory}/processed/{scraped_date}.csv')
+        # append job_info to processed_job_posts
+        processed_job_posts.append(job_info)
 
-def s3_to_redshift():
-    # connection information
+    return processed_job_posts
+
+def upload_to_redshift(processed_job_posts):
+    # information to connect to redshift
     connection_string = f"dbname={db_name} port={port} user={username} password={password} host={host}"
 
     # establish connection to redshift
@@ -170,20 +170,35 @@ def s3_to_redshift():
     # object to execute commands in redshift database
     cursor = connection.cursor()
 
-    # SQL query
-    cursor.execute()
+    # create table if it doesn't already exist
+    query = 'CREATE TABLE IF NOT EXISTS Jobs (Job_Title VARCHAR(40), Scraped_Date DATE);'
+    cursor.execute(query)
+
+    # insert each processed_job_post into the redshift table, Jobs
+    for processed_job_post in processed_job_posts:
+        # insert query
+        print(processed_job_post[0])
+        print(processed_job_post[1])
+        query = f"INSERT INTO Jobs (Job_Title, Scraped_Date) VALUES ('{processed_job_post[0]}', '{processed_job_post[1]}');"
+        cursor.execute(query)
+
+    cursor.execute('SELECT * FROM Jobs;')
+    print(cursor.fetchall())
 
     print("Successful!")
+
+    connection.close()
 
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
 # 'event' and 'context' are just placeholder parameters
 def indeed_scraper(event, context):
     # scrape postings for each 'job' type
     for job in jobs:
-        #page_links = get_page_links(job[0], job[1], job[2])
-        #job_links = get_job_links(page_links)
-        #upload_to_s3_and_transform(job_links, bucket_name, job[0])
-        s3_to_redshift()
+        page_links = get_page_links(job[0], job[1], job[2])
+        job_links = get_job_links(page_links)
+        job_posts = upload_to_s3(job_links, bucket_name, job[0])
+        processed_job_posts = transformer(job_posts)
+        upload_to_redshift(processed_job_posts)
 
 if __name__ == '__main__':
     # normally, the parameters are passed to the function when we use the lambda emulator via the command line
