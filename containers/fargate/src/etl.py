@@ -11,6 +11,8 @@ import boto3
 
 import pandas as pd
 
+import psycopg2
+
 # have to set a bunch of options for headless chrome driver to work on lambda
 options = webdriver.ChromeOptions()
 options.binary_location = '/opt/chrome/chrome'
@@ -28,8 +30,18 @@ options.add_argument(f"--data-path={mkdtemp()}")
 options.add_argument(f"--disk-cache-dir={mkdtemp()}")
 options.add_argument("--remote-debugging-port=9222")
 
-# get from terraform directory: "mzheng-${var.aws_s3_bucket_name}"
+# get from variables.tf: "aws_s3_bucket_name"
 bucket_name = 'mzheng-indeed-s3'
+# get from variables.tf: "aws_redshift_db_name"
+db_name = 'jobs'
+# get from variables.tf: "aws_redshift_master_username"
+username = 'admin_admin'
+# get from variables.tf: "aws_redshift_master_password"
+password = 'Admin!123'
+# get from AWS console -> Redshift -> Clusters -> Port
+port = '5439'
+# get from AWS console -> Redshift -> Clusters -> Endpoint
+host = 'mzheng-indeed-redshift.cm5xc4oyddys.us-west-2.redshift.amazonaws.com:5439/jobs'
 
 # jobs to scrape
 jobs = [['software engineer', '', 1]]
@@ -148,7 +160,17 @@ def upload_to_s3_and_transform(job_links, bucket_name, directory):
     s3_client.put_object(Bucket=bucket_name, Body=temporary_csv_storage.getvalue(), Key=f'{directory}/processed/{scraped_date}.csv')
 
 def s3_to_redshift():
-    pass
+    # connection information
+    connection_string = f"dbname={db_name} port={port} user={username} password={password} host={host}"
+
+    # establish connection to redshift
+    connection = psycopg2.connect(connection_string)
+
+    # object to execute commands in redshift database
+    cursor = connection.cursor()
+
+    # SQL query
+    cursor.execute()
 
 # this is the lambda_handler function, which takes two parameters: 'event' and 'context'
 # 'event' and 'context' are just placeholder parameters

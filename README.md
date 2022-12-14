@@ -100,6 +100,8 @@ By default, the script only scrapes one type of job: Software Engineer. In the f
 
 At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container that runs Chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though I won't be using AWS Lambda, this Dockerfile provides a convenient way to Dockerize my selenium web crawler for deployment to AWS Fargate.
 
+First the `get_page_links` function is executed which takes 3 parameters: job, location, and number of pages. It takes these parameters and grabs the links to each page that is to be scraped.  
+
 #### Steps
 
 1. Build the image:
