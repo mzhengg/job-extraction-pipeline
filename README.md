@@ -10,7 +10,7 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 * Docker
 * Terraform
 
-![My_Image](diagram.jpg)
+![My_Image](architecture-diagram.jpg)
 
 ## Overview of Terraform
 
