@@ -4,32 +4,32 @@ variable "aws_s3_bucket_name" {
   default = "indeed-s3"
 }
 
-variable "aws_redshift_cluser_id" {
+variable "aws_redshift_cluster_id" {
   description = "cluster id of redshift cluster"
   type = string
-  defauly = "indeed-redshift"
+  default = "indeed-redshift"
 }
 
 variable "aws_redshift_db_name" {
   description = "redshift database name"
   type = string
-  defauly = "jobs"
+  default = "jobs"
 }
 
 variable "aws_redshift_master_username" {
   description = "redshift master username"
   type = string
-  defauly = "admin"
+  default = "admin_admin"
 }
 
 variable "aws_redshift_master_password" {
   description = "redshift master passsword"
   type = string
-  defauly = "admin"
+  default = "Admin!123"
 }
 
 variable "aws_redshift_node_type" {
   description = "redshift node type"
   type = string
-  defauly = "dc1.large"
+  default = "dc2.large"
 }

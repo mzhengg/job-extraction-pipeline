@@ -21,8 +21,8 @@ resource "aws_s3_bucket" "data-lake" {
 # create redshift cluster
 resource "aws_redshift_cluster" "data-warehouse" {
   cluster_identifier = "mzheng-${var.aws_redshift_cluster_id}"
-  database_name      = "${aws_redshift_db_name}"
-  master_username    = "${aws_redshift_master_username}"
-  master_password    = "${aws_redshift_master_password}"
-  node_type          = "${aws_redshift_node_type}"
+  database_name      = "${var.aws_redshift_db_name}"
+  master_username    = "${var.aws_redshift_master_username}"
+  master_password    = "${var.aws_redshift_master_password}"
+  node_type          = "${var.aws_redshift_node_type}"
 }

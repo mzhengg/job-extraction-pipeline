@@ -93,7 +93,7 @@ terraform destroy
 AWS Fargate is used to host and execute a container that will:
     - Scrape Indeed.com using Selenium and Python
     - Upload the raw job postings to AWS S3
-    - Transform the raw data using PySpark
+    - Fix structural errors in the raw data
     - Store the structured data in AWS Redshift  
 
 By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well! But for now, we will scrape 10 pages of that one job every week.  
