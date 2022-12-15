@@ -8,9 +8,8 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 * AWS (S3, Fargate, MWAA, Redshift)
 * Airflow
 * Docker
-* Terraform
 
-![My_Image](architecture-diagram.jpg)
+![My_Image](diagram.jpg)
 
 ## Overview of Terraform
 
