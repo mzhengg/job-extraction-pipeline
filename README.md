@@ -127,8 +127,7 @@ At first, I intended to use AWS Lambda to trigger the pipeline to run. However, 
 1. Build the image for the data pipeline:
 
 ```bash
-docker build . \
-    --tag scraper:latest
+docker build . --tag scraper:latest
 ```
 
 2. Run the image (replace the dummy values with your values in the `.env` file)
