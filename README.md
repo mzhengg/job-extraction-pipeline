@@ -11,12 +11,6 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 
 ![My_Image](diagram.jpg)
 
-## Overview of Terraform
-
-An infrastructure-as-code tool that lets you define both cloud and on-premise resources in human-readable configuration files that you can version, reuse, and share. You can then use a consistent workflow to provision and manage all of your infrastructure throughout its lifecycle.  
-
-In other words, it is a tool for managing and provisioning computer data centers through code instead of manual processes.  
-
 ## Overview of Docker
 
 Docker is a platform that enables developers to build, deploy, run, update, and manage containers. Containers are a package of software that includes everything needed to run an application: code, dependencies, etc. Containers are isolated from each other and can be ran in different environments (Windows, macOS, GCP, etc.). They allow reproducibility, local experiments, and running pipelines on the cloud.
@@ -43,81 +37,76 @@ Apache Airflow is the most popular data workflow orchestration tool.
 
 ## How to Setup and Deploy Dashboard
 
-### 1) Setup Infrastucture using Terraform
+### 1) Setup AWS Infrastucture
 
-Terraform is used to set up the AWS infrastructure (S3, Fargate, MWAA, Redshift).  
+The AWS management console is used to set up the AWS infrastructure (S3, Fargate, MWAA, Redshift).  
 
 #### Instructions
 
 1. Get AWS keys by following these steps:
+
     - Sign into AWS console
-    - Click on `username`
-    - Click on `security credentials`
-    - Click on `create access key`  
+    - Click on your username
+    - Click on `Security credentials`
+    - Scroll down until you see `Create access key` and click on it  
 
-2. Create a `.env` file in the main directory. This will be the file that stores all the important AWS access keys and redshift credentials for running the data pipeline. Store the AWS access keys you got from step 1 in this file.
+2. Create a `.env` file in the main directory. This file will store all the confidential information for running the data pipeline. Enter your AWS access keys into the file as follows:
 
-2. Set these environment variables (get the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY from the `.env` file):
+    - AWS_ACCESS_KEY_ID=<aws_access_key_id>
+    - AWS_SECRET_ACCESS_KEY=<aws_secret_access_key>
 
-```bash
-export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY  
-```
+3. Setup Redshift cluster:
 
-3. Build the AWS infrastructure by executing these commands in order:
+    - Sign into AWS console
+    - Go to search bar and lookup `Redshift`
+    - Click on the left side panel and select `Clusters`
+    - Click `Create cluster`: Cluster identifier = `indeed-scraper-redshift-db`, Usage: `Free trial`, User name: <username>, Password: <password>
 
-```bash
-terraform init
-```
+4. Save the Redshift cluster credentials in `.env` file:
 
-```bash
-terraform plan
-```
+    - AWS_REDSHIFT_MASTER_USERNAME=<username>
+    - AWS_REDSHIFT_MASTER_PASSWORD=<password>
+    - AWS_REDSHIFT_DATABASE_NAME=`dev` (default name, can change later)
+    - AWS_REDSHIFT_PORT=`5439` (default port, can change later)
+    - AWS_REDSHIFT_HOST=<host> (Endpoint URL, remove port and database name from URL)
 
-- *You will be prompted to make a `master username` and `master password` for accessing the Redshift cluster. Store this information in the `.env` file, as you will need to access this again later.*
+6. When a Redshift cluster is created, it's locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:
 
-```bash
-terraform apply
-```
+    - Locate cluster in Redshift
+    - Click on `Properties`
+    - Under `Network and security settings` is the `VPC security group` (click on the blue hyperlink)
+    - Click on `Inbound rules` and `Edit inbound rules`
+    - Click `Add rule` and select the following for the new rule: Type = `All traffic`, Source: `0.0.0.0/0`
+    - Click `Save rules`
 
-4. Destroy the infrastructure (when they are no longer needed):
+7. In order to run queries in the Redshift cluster, an IAM user must be created by doing the following:
 
-```bash
-terraform destroy
-```
+    - Locate cluster in Redshift
+    - Click on `Properties`
+    - Under `Cluster permissions`, click `Manage IAM roles` and `Create IAM role`
+    - Select `Any S3 bucket` and click `Create IAM role as default`
 
-- If any issues arise when you try to destroy the infrastructure, go into the AWS console and destroy them manually. But, if you do this, then you have to delete all the files in the `terraform` folder except for `main.tf` and `variables.tf` to remove any history of previous infrastructure builds.  
+8. Setup S3 bucket:
 
-5. Go to Redshift and locate your cluster in the AWS console. Get the `database name`, `port`, and `host name` (which is just the endpoint URL, but remove the database and port from the URL). Now add it to `.env` because it will be used later.  
+    - Go to search bar and lookup `S3`
+    - Click on the left side panel and select `Buckets`
+    - Click `Create bucket`: Bucket name = `indeed-scraper-s3-bucket`
 
-6. When you create a Redshift cluster, it is locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:
+9. Save the S3 bucket name to `.env` as:
 
-    * Go to Redshift and locate your cluster in the AWS console
-    * Click on the `VPC security group`
-    * Click on `Inbound rules` and then click `Edit Inbound rules`
-    * Click `Add rule` and select the following for the new rule: Type = `All traffic`, Source: `0.0.0.0/0`
+    - AWS_S3_BUCKET_NAME=`indeed-scraper-s3-bucket`
 
-7. Now, the Redshift cluster should be accessible via pyscopg2 in the following part. But you must create an IAM user in order to run queries in the Redshift cluster. To do this, follow these steps:
+10. Depending on where you are located, input the AWS region whose servers you want to send your requests to by default in the `.env` file:
 
-    * Go to Redshift and locate your cluster in the AWS console
-    * Scroll down and click `Associated IAM roles`
-    * Click on `Manage IAM roles`, select `Any S3 bucket`, and select `Create IAM role as default`
-
-*This IAM role will have full command access to Redshift and be able to access any S3 bucket. Generally, this is not recommended for security reasons. But for the purposes of this project, it is fine.*
-
-The infrastructure is now fully up and running!
+    - AWS_DEFAULT_REGION=`us-east-1`
 
 ### 2) Test and Deploy Container to AWS Fargate
 
-AWS Fargate is used to host and execute a container that will:
-    - Scrape Indeed.com using Selenium
-    - Upload the raw job postings to AWS S3
-    - Fix structural errors in the raw data
-    - Store the structured data in AWS Redshift  
+AWS Fargate is used to host and execute a container that will: scrape Indeed.com using Selenium, upload the raw job postings to AWS S3, fix structural errors in the raw data, and store the structured data in AWS Redshift.  
 
-By default, the script only scrapes one type of job: Software Engineer. In the future, there is room to scrape other jobs as well. But for now, we will scrape 10 pages of that one job every week.  
+The script currently only supports the scraping of Software Engineer jobs. In the future, there is room to scrape other jobs as well. But for now, we will scrape 10 pages of that one job every week.  
 
-At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-hrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to Dockerize my Selenium web crawler for deployment to AWS Fargate.
+At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to Dockerize my Selenium web crawler for deployment to AWS Fargate.
 
 #### Data Pipeline Overview
 
@@ -131,32 +120,23 @@ At first, I intended to use AWS Lambda to trigger the pipeline to run. However, 
 
 5. Then a connection to redshift is established and a table, if it doesn't already exist in the redshift cluster, is created in the `upload_to_redshift` function. Each job's attributes from before are inserted into the table.
 
-    * AWS Redshift is essentially a PostgreSQL database. Thus, psycopg2 was used to connect to the Redshift cluster. To do this, 5 parameters were given: `database name`, `port`, `master username`, `master password`, and the `host` name. These parameters are located in the `.env` file that we generated earlier. These parameters are passed into the container as environmental variables when the container is run.  
+    * AWS Redshift is essentially a PostgreSQL database, so psycopg2 was used to connect to the Redshift cluster. To do this, 5 parameters were given: `database name`, `port`, `master username`, `master password`, and the `host` name. These parameters are located in the `.env` file that we generated earlier. These parameters are passed into the container as environmental variables when the container is run.  
 
-#### Instructions
+#### Test Instructions
 
 1. Build the image for the data pipeline:
 
 ```bash
 docker build . \
-	--tag scraper:latest
+    --tag scraper:latest
 ```
 
-2. Run the image (replace the placeholder values with the values in the `.env` file)
+2. Run the image
 
 ```bash
 docker run \
     -p 9000:8080 \
     --name scraper \
-    -e AWS_ACCESS_KEY_ID='AKIAIOSFODNN7EXAMPLE' \
-    -e AWS_SECRET_ACCESS_KEY='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' \
-    -e AWS_DEFAULT_REGION='us-west-2' \
-    -e AWS_REDSHIFT_MASTER_USERNAME='EXAMPLE_USERNAME' \
-    -e AWS_REDSHIFT_MASTER_PASSWORD='EXAMPLE_PASSWORD' \
-    -e AWS_REDSHIFT_DATABASE_NAME='EXAMPLE_DATABASE' \
-    -e AWS_REDSHIFT_PORT='EXAMPLE_PORT' \
-    -e AWS_REDSHIFT_HOST='EXAMPLE_HOST' \
-    -e AWS_S3_BUCKET_NAME='EXAMPLE_BUCKET_NAME' \
     scraper:latest
 ```
 
