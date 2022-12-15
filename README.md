@@ -215,14 +215,21 @@ Now that the data pipeline has been tested and verified to work on the local mac
             - Private repository authentication: `Yes`
             - Environment Files: Source = `S3 ARN`, Location = `arn:aws:s3:::indeed-scraper-s3-bucket/environment files/.env`
 
-4. Create ECS cluster
+4. Grant ECS task required IAM permissions to retrieve environment variable files from S3 buckets: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/taskdef-envfiles.html)
+
+    - Go to search bar and lookup `IAM`
+    - Click on the left side panel and select `Roles`
+    - Select `ecsTaskExecutionRole` and click `Add permissions`
+    - Click `Attach policies` and search for and select `AmazonS3FullAccess`
+
+5. Create ECS cluster
 
     - Go to search bar and lookup `ECS`
     - Click on the left side panel and select `Clusters`
     - Click `Create Cluster` and select `Networking only`
     - Cluster name = `indeed-scraper-ecs-cluster`
 
-5. Create Fargate service
+6. Create Fargate service
 
     - Go to search bar and lookup `ECS`
     - Click on the left side panel and select `Clusters`
