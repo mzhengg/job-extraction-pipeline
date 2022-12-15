@@ -52,8 +52,8 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 2. Create a `.env` file in the main directory. This file will store all the confidential information for running the data pipeline. Enter your AWS access keys into the file as follows:
 
-    - AWS_ACCESS_KEY_ID=<aws_access_key_id>
-    - AWS_SECRET_ACCESS_KEY=<aws_secret_access_key>
+    - AWS_ACCESS_KEY_ID = <aws_access_key_id>
+    - AWS_SECRET_ACCESS_KEY = <aws_secret_access_key>
 
 3. Setup Redshift cluster:
 
@@ -64,11 +64,11 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 4. Save the Redshift cluster credentials in `.env` file:
 
-    - AWS_REDSHIFT_MASTER_USERNAME=<username>
-    - AWS_REDSHIFT_MASTER_PASSWORD=<password>
-    - AWS_REDSHIFT_DATABASE_NAME=`dev` (default name, can change later)
-    - AWS_REDSHIFT_PORT=`5439` (default port, can change later)
-    - AWS_REDSHIFT_HOST=<host> (Endpoint URL, remove port and database name from URL)
+    - AWS_REDSHIFT_MASTER_USERNAME = <username>
+    - AWS_REDSHIFT_MASTER_PASSWORD = <password>
+    - AWS_REDSHIFT_DATABASE_NAME = `dev` (default name, can change later)
+    - AWS_REDSHIFT_PORT = `5439` (default port, can change later)
+    - AWS_REDSHIFT_HOST = <host> (Endpoint URL, remove port and database name from URL)
 
 6. When a Redshift cluster is created, it's locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:
 
@@ -94,11 +94,11 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 9. Save the S3 bucket name to `.env` as:
 
-    - AWS_S3_BUCKET_NAME=`indeed-scraper-s3-bucket`
+    - AWS_S3_BUCKET_NAME = `indeed-scraper-s3-bucket`
 
 10. Depending on where you are located, input the AWS region whose servers you want to send your requests to by default in the `.env` file:
 
-    - AWS_DEFAULT_REGION=`us-east-1`
+    - AWS_DEFAULT_REGION = `us-east-1`
 
 ### 2) Test and Deploy Container to AWS Fargate
 
@@ -106,7 +106,7 @@ AWS Fargate is used to host and execute a container that will: scrape Indeed.com
 
 The script currently only supports the scraping of Software Engineer jobs. In the future, there is room to scrape other jobs as well. But for now, we will scrape 10 pages of that one job every week.  
 
-At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to Dockerize my Selenium web crawler for deployment to AWS Fargate.
+At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to Dockerize my Selenium web crawler for deployment to AWS Fargate.  
 
 #### Data Pipeline Overview
 
@@ -131,12 +131,21 @@ docker build . \
     --tag scraper:latest
 ```
 
-2. Run the image
+2. Run the image (replace the dummy values with your values in the `.env` file)
 
 ```bash
 docker run \
     -p 9000:8080 \
     --name scraper \
+    AWS_ACCESS_KEY_ID='<aws_access_key_id>' \
+    AWS_SECRET_ACCESS_KEY='<aws_secret_access_key>' \
+    AWS_REDSHIFT_MASTER_USERNAME='<username>' \
+    AWS_REDSHIFT_MASTER_PASSWORD='<password>' \
+    AWS_REDSHIFT_DATABASE_NAME='dev' \
+    AWS_REDSHIFT_PORT='5439' \
+    AWS_REDSHIFT_HOST='<host>' \
+    AWS_S3_BUCKET_NAME='indeed-scraper-s3-bucket' \
+    AWS_DEFAULT_REGION='us-east-1' \
     scraper:latest
 ```
 
