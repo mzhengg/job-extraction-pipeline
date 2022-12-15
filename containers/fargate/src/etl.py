@@ -2,15 +2,12 @@ import random
 import string
 from datetime import date
 from tempfile import mkdtemp
-from io import StringIO
 import os
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 import boto3
-
-import pandas as pd
 
 import psycopg2
 
@@ -177,12 +174,10 @@ def upload_to_redshift(processed_job_posts):
     # insert each processed_job_post into the redshift table
     for processed_job_post in processed_job_posts:
         # insert query
-        print(processed_job_post[0])
-        print(processed_job_post[1])
         query = f"INSERT INTO jobs (job_title, scraped_date) VALUES ('{processed_job_post[0]}', '{processed_job_post[1]}');"
         cursor.execute(query)
 
-    # cursor.execute('SELECT * FROM Jobs;')
+    # cursor.execute('SELECT * FROM jobs;')
     # print(cursor.fetchall())
 
     connection.close()

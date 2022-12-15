@@ -1,5 +1,4 @@
 selenium
 boto3
 botocore
-pandas
 psycopg2-binary
