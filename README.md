@@ -211,15 +211,24 @@ Now that the data pipeline has been tested and verified to work on the local mac
         - Click `Add container`:
 
             - Container name: `indeed-scraper-etl-container`
-            - Image: `get the image URL from the last step of the previous step`
+            - Image: `get the image URL from the last step of step 1`
             - Private repository authentication: `Yes`
             - Environment Files: Source = `S3 ARN`, Location = `arn:aws:s3:::indeed-scraper-s3-bucket/environment files/.env`
 
 4. Create ECS cluster
 
+    - Go to search bar and lookup `ECS`
+    - Click on the left side panel and select `Clusters`
+    - Click `Create Cluster` and select `Networking only`
+    - Cluster name = `indeed-scraper-ecs-cluster`
 
+5. Create Fargate service
 
-    
+    - Go to search bar and lookup `ECS`
+    - Click on the left side panel and select `Clusters`
+    - Click on the cluster made in step 4
+    - Under `Services` click `Create`
+    - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `default`, Subnets = `click on the first option`
 
 ### 3) Test and Deploy Airflow DAG to AWS MWAA
 
