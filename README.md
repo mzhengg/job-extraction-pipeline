@@ -52,8 +52,8 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 2. Create a `.env` file in the main directory. This file will store all the confidential information for running the data pipeline. Enter your AWS access keys into the file as follows:
 
-    - AWS_ACCESS_KEY_ID = `aws_access_key_id`
-    - AWS_SECRET_ACCESS_KEY = `aws_secret_access_key`
+    - AWS_ACCESS_KEY_ID=`aws_access_key_id`
+    - AWS_SECRET_ACCESS_KEY=`aws_secret_access_key`
 
 3. Setup Redshift cluster:
 
@@ -64,11 +64,11 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 4. Save the Redshift cluster credentials in `.env` file:
 
-    - AWS_REDSHIFT_MASTER_USERNAME = `username`
-    - AWS_REDSHIFT_MASTER_PASSWORD = `password`
-    - AWS_REDSHIFT_DATABASE_NAME = `dev` (default name, can change later)
-    - AWS_REDSHIFT_PORT = `5439` (default port, can change later)
-    - AWS_REDSHIFT_HOST = `host` (Endpoint URL, remove port and database name from URL)
+    - AWS_REDSHIFT_MASTER_USERNAME=`username`
+    - AWS_REDSHIFT_MASTER_PASSWORD=`password`
+    - AWS_REDSHIFT_DATABASE_NAME=`dev` (default name, can change later)
+    - AWS_REDSHIFT_PORT=`5439` (default port, can change later)
+    - AWS_REDSHIFT_HOST=`host` (Endpoint URL, remove port and database name from URL)
 
 6. When a Redshift cluster is created, it's locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:
 
@@ -96,11 +96,11 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 9. Save the S3 bucket name to `.env` as:
 
-    - AWS_S3_BUCKET_NAME = `indeed-scraper-s3-bucket`
+    - AWS_S3_BUCKET_NAME=`indeed-scraper-s3-bucket`
 
 10. Depending on where you are located, input the AWS region whose servers you want to send your requests to by default in the `.env` file:
 
-    - AWS_DEFAULT_REGION = `us-east-1`
+    - AWS_DEFAULT_REGION=`us-east-1`
 
 ### 2) ETL Pipeline Container Development
 
@@ -190,6 +190,36 @@ Now that the data pipeline has been tested and verified to work on the local mac
         ``` bash
         docker push 316226119737.dkr.ecr.us-east-1.amazonaws.com/indeed-scraper-ecs-repository:latest
         ```
+
+2. Upload environment variable file `.env` to S3
+
+    - Go to S3 and locate the `indeed-scraper-s3-bucket` bucket
+    - Click `Create folder`: Folder name = `environment files`
+    - Upload the `.env` file into the newly created folder
+
+3. Create ECS task
+
+    - Go to search bar and lookup `ECS`
+    - Click on the left side panel and select `Task Definitions`
+    - Click `Create new Task Definition` and select `Fargate`:
+
+        - Task definition name: `indeed-scraper-ecs-task`
+        - Operating system family: `Linux`
+        - Task execution role: `ecsTaskExecutionRole`
+        - Task memory (GB): `3GB`
+        - Task CPU (vCPU): `1 vCPU`
+        - Click `Add container`:
+
+            - Container name: `indeed-scraper-etl-container`
+            - Image: `get the image URL from the last step of the previous step`
+            - Private repository authentication: `Yes`
+            - Environment Files: Source = `S3 ARN`, Location = `arn:aws:s3:::indeed-scraper-s3-bucket/environment files/.env`
+
+4. Create ECS cluster
+
+
+
+    
 
 ### 3) Test and Deploy Airflow DAG to AWS MWAA
 
