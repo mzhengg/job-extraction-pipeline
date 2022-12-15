@@ -10,8 +10,6 @@ from selenium.webdriver.common.by import By
 
 import boto3
 
-import pandas as pd
-
 import psycopg2
 
 # have to set a bunch of options for headless chrome driver to work on lambda
@@ -121,7 +119,7 @@ def upload_to_s3(job_links, bucket_name, directory):
     job_posts = []
 
     # scrape information from each job post
-    for link in job_links:
+    for link in job_links[0:1]:
         # raw file to be uploaded
         scraped_posting = scraper(link)
 
@@ -182,8 +180,8 @@ def upload_to_redshift(processed_job_posts):
         query = f"INSERT INTO jobs (job_title, scraped_date) VALUES ('{processed_job_post[0]}', '{processed_job_post[1]}');"
         cursor.execute(query)
 
-    # cursor.execute('SELECT * FROM Jobs;')
-    # print(cursor.fetchall())
+    cursor.execute('SELECT * FROM Jobs;')
+    print(cursor.fetchall())
 
     connection.close()
 

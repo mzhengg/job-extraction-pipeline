@@ -137,15 +137,15 @@ docker build . \
 docker run \
     -p 9000:8080 \
     --name scraper \
-    AWS_ACCESS_KEY_ID='<aws_access_key_id>' \
-    AWS_SECRET_ACCESS_KEY='<aws_secret_access_key>' \
-    AWS_REDSHIFT_MASTER_USERNAME='<username>' \
-    AWS_REDSHIFT_MASTER_PASSWORD='<password>' \
-    AWS_REDSHIFT_DATABASE_NAME='dev' \
-    AWS_REDSHIFT_PORT='5439' \
-    AWS_REDSHIFT_HOST='<host>' \
-    AWS_S3_BUCKET_NAME='indeed-scraper-s3-bucket' \
-    AWS_DEFAULT_REGION='us-east-1' \
+    AWS_ACCESS_KEY_ID=`aws_access_key_id` \
+    AWS_SECRET_ACCESS_KEY=`aws_secret_access_key` \
+    AWS_REDSHIFT_MASTER_USERNAME=`username` \
+    AWS_REDSHIFT_MASTER_PASSWORD=`password` \
+    AWS_REDSHIFT_DATABASE_NAME=`database_name` \
+    AWS_REDSHIFT_PORT=`port` \
+    AWS_REDSHIFT_HOST=`host` \
+    AWS_S3_BUCKET_NAME=`bucket_name` \
+    AWS_DEFAULT_REGION=`aws_region` \
     scraper:latest
 ```
 
