@@ -1,19 +1,19 @@
 variable "aws_s3_bucket_name" {
   description = "name of s3 bucket"
   type = string
-  default = "indeed-s3"
+  default = "indeed-scraper-s3"
 }
 
 variable "aws_redshift_cluster_id" {
   description = "cluster id of redshift cluster"
   type = string
-  default = "indeed-redshift"
+  default = "indeed-scraper-redshift"
 }
 
 variable "aws_redshift_db_name" {
   description = "redshift database name"
   type = string
-  default = "Jobs"
+  default = "jobs"
 }
 
 variable "aws_redshift_master_username" {
