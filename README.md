@@ -78,6 +78,8 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
     - Click on `Inbound rules` and `Edit inbound rules`
     - Click `Add rule` and select the following for the new rule: Type = `All traffic`, Source: `0.0.0.0/0`
     - Click `Save rules`
+    - Also under `Network and security settings`, click `Edit`
+    - Under `Publicly accessible`, check off `Turn on Publicly accessible`
 
 7. In order to run queries in the Redshift cluster, an IAM user must be created by doing the following:
 
