@@ -52,23 +52,23 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 2. Create a `.env` file in the main directory. This file will store all the confidential information for running the data pipeline. Enter your AWS access keys into the file as follows:
 
-    - AWS_ACCESS_KEY_ID = <aws_access_key_id>
-    - AWS_SECRET_ACCESS_KEY = <aws_secret_access_key>
+    - AWS_ACCESS_KEY_ID = `aws_access_key_id`
+    - AWS_SECRET_ACCESS_KEY = `aws_secret_access_key`
 
 3. Setup Redshift cluster:
 
     - Sign into AWS console
     - Go to search bar and lookup `Redshift`
     - Click on the left side panel and select `Clusters`
-    - Click `Create cluster`: Cluster identifier = `indeed-scraper-redshift-db`, Usage: `Free trial`, User name: <username>, Password: <password>
+    - Click `Create cluster`: Cluster identifier = `indeed-scraper-redshift-db`, Usage: `Free trial`, User name: `username`, Password: `password`
 
 4. Save the Redshift cluster credentials in `.env` file:
 
-    - AWS_REDSHIFT_MASTER_USERNAME = <username>
-    - AWS_REDSHIFT_MASTER_PASSWORD = <password>
+    - AWS_REDSHIFT_MASTER_USERNAME = `username`
+    - AWS_REDSHIFT_MASTER_PASSWORD = `password`
     - AWS_REDSHIFT_DATABASE_NAME = `dev` (default name, can change later)
     - AWS_REDSHIFT_PORT = `5439` (default port, can change later)
-    - AWS_REDSHIFT_HOST = <host> (Endpoint URL, remove port and database name from URL)
+    - AWS_REDSHIFT_HOST = `host` (Endpoint URL, remove port and database name from URL)
 
 6. When a Redshift cluster is created, it's locked down by default so nobody has access to it. To grant other users inbound access to a Redshift cluster, you associate the cluster with a security group. To do this, follow these steps:
 
