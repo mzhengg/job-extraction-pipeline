@@ -37,7 +37,7 @@ Apache Airflow is the most popular data workflow orchestration tool.
 
 ## How to Setup and Deploy Dashboard
 
-### 1) Setup AWS Infrastucture
+### 1) Setup AWS Storage Infrastucture
 
 The AWS management console is used to set up the AWS infrastructure (S3, Fargate, MWAA, Redshift).  
 
@@ -102,7 +102,7 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
     - AWS_DEFAULT_REGION = `us-east-1`
 
-### 2) Test and Deploy Container to AWS Fargate
+### 2) ETL Pipeline Container Development
 
 AWS Fargate is used to host and execute a container that will: scrape Indeed.com using Selenium, upload the raw job postings to AWS S3, fix structural errors in the raw data, and store the structured data in AWS Redshift.  
 
@@ -157,6 +157,39 @@ docker kill scraper
 docker rm scraper
 docker image rm scraper:latest
 ```
+
+### 3) Deploy ETL Container to AWS Fargate
+
+Now that the data pipeline has been tested and verified to work on the local machine, it will be deployed to an AWS Fargate cluster to be run on a regular interval. This guide was used to set this up: https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537
+
+1. Setup ECR registry:
+
+    - Login to AWS CLI by typing `aws configure` into terminal: fill in AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_DEFAULT_REGION using the information from `.env` (ignore the output format)
+    - Go to search bar and lookup `ECS`
+    - Click on the left side panel and select `Repositories`
+    - Click `Create repository`: Repository name = `indeed-scraper-ecs-repository`
+    - Select the repository that was just created and click `View push commands`
+    - Back to the terminal, enter the commands in the pop-up window in sequential order:
+
+        - Retrieve an authentication token and authenticate your Docker client to your registry. (NOTE: this may be different than yours - just copy and paste step 1 into terminal and hit enter)
+        ```bash
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 316226119737.dkr.ecr.us-east-1.amazonaws.com
+        ``` 
+
+        - Build the Docker image to push to AWS ECR (make sure you're in ./containers/fargate/). (NOTE: this may be different than yours - just copy and paste step 2 into terminal and hit enter)
+        ```bash
+        docker build -t indeed-scraper-ecs-repository .
+        ```
+
+        - After the build completes, tag your image so you can push the image to the repository: (NOTE: this may be different than yours - just copy and paste step 3 into terminal and hit enter)
+        ```bash
+        docker tag indeed-scraper-ecs-repository:latest 316226119737.dkr.ecr.us-east-1.amazonaws.com/indeed-scraper-ecs-repository:latest
+        ```
+
+        - Run the following command to push this image to your newly created AWS repository: (NOTE: this may be different than yours - just copy and paste step 4 into terminal and hit enter)
+        ``` bash
+        docker push 316226119737.dkr.ecr.us-east-1.amazonaws.com/indeed-scraper-ecs-repository:latest
+        ```
 
 ### 3) Test and Deploy Airflow DAG to AWS MWAA
 
