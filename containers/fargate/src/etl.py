@@ -28,17 +28,12 @@ options.add_argument(f"--data-path={mkdtemp()}")
 options.add_argument(f"--disk-cache-dir={mkdtemp()}")
 options.add_argument("--remote-debugging-port=9222")
 
-# get from variables.tf: "aws_s3_bucket_name"
+# passed in with .env file
 bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
-# get from variables.tf: "aws_redshift_db_name"
 db_name = os.getenv('AWS_REDSHIFT_DATABASE_NAME')
-# get from variables.tf: "aws_redshift_master_username"
 username = os.getenv('AWS_REDSHIFT_MASTER_USERNAME')
-# get from variables.tf: "aws_redshift_master_password"
 password = os.getenv('AWS_REDSHIFT_MASTER_PASSWORD')
-# get from AWS console -> Redshift -> Clusters -> Port
 port = os.getenv('AWS_REDSHIFT_PORT')
-# get from AWS console -> Redshift -> Clusters -> Endpoint (remove port and db)
 host = os.getenv('AWS_REDSHIFT_HOST')
 
 # jobs to scrape
@@ -175,9 +170,6 @@ def upload_to_redshift(processed_job_posts):
         # insert query
         query = f"INSERT INTO jobs (job_title, scraped_date) VALUES ('{processed_job_post[0]}', '{processed_job_post[1]}');"
         cursor.execute(query)
-
-    # cursor.execute('SELECT * FROM jobs;')
-    # print(cursor.fetchall())
 
     connection.close()
 
