@@ -244,7 +244,7 @@ Now that the data pipeline has been tested and verified to work on the local mac
     - Click on the left side panel and select `Clusters`
     - Click on the cluster made in step 4
     - Under `Services` click `Create`
-    - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `default`, Subnets = `click on the first option`
+    - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `click on the first option`, Subnets = `click on the first option`
 
 ### 4) Test and Deploy Airflow DAG to AWS MWAA
 
