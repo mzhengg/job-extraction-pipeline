@@ -168,7 +168,7 @@ def upload_to_redshift(processed_job_posts):
     cursor = connection.cursor()
 
     # create table if it doesn't already exist
-    query = 'CREATE TABLE IF NOT EXISTS jobs (job_title VARCHAR(40), scraped_date DATE);'
+    query = 'CREATE TABLE IF NOT EXISTS jobs (job_title VARCHAR(200), scraped_date DATE);'
     cursor.execute(query)
 
     # insert each processed_job_post into the redshift table
