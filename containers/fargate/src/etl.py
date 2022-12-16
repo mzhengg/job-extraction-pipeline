@@ -164,6 +164,9 @@ def upload_to_redshift(processed_job_posts):
     # establish connection to redshift
     connection = psycopg2.connect(connection_string)
 
+    # ensure queries are commited to database
+    connection.autocommit = True
+
     # object to execute commands in redshift database
     cursor = connection.cursor()
 
