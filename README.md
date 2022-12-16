@@ -35,7 +35,7 @@ Docker volume: file system mounted on Docker container to preserve data generate
 
 Apache Airflow is the most popular data workflow orchestration tool.  
 
-## How to Setup and Deploy Dashboard
+## How to Setup and Deploy Data Pipeline
 
 ### 1) Setup AWS Storage Infrastucture
 
@@ -246,7 +246,7 @@ Now that the data pipeline has been tested and verified to work on the local mac
     - Under `Services` click `Create`
     - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `default`, Subnets = `click on the first option`
 
-### 3) Test and Deploy Airflow DAG to AWS MWAA
+### 4) Test and Deploy Airflow DAG to AWS MWAA
 
 Airflow is used to orchestrate the lambda function. Every week, the DAG will trigger the data pipeline to scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake. Then the raw data will be transformed using PySpark and uploaded to AWS Redshift. The DAG was developed and tested on a local machine using https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
 
@@ -281,3 +281,41 @@ By default, the `bootstrap.sh` script creates a username and password for your l
     ./mwaa-local-env test-requirements
     ```
 - Add custom plugins to the `plugins/` folder.
+
+### 5) Destroy the AWS Infrastructure
+
+When the pipeline is no longer needed, the AWS infrastructure should be destroyed to ensure that no additional charges are incurred. 
+
+#### Instructions
+
+1. Destroy the S3 bucket:
+
+    - In the console: search `S3`, click `indeed-scraper-s3-bucket`, select all the data, and click `Delete`
+    - Go to `Buckets`, select `indeed-scraper-s3-bucket`, and click `Delete`
+
+2. Destroy the Redshift cluster:
+
+    - In the console: search `Redshift`, click `indeed-scraper-redshift-db`, click `Actions`, and click `Delete`
+    - Uncheck `Create final snapshot`
+
+3. Destroy the ECR repository:
+
+    - In the console: search `ECS`, click `Repositories` on the left side panel
+    - Select `indeed-scraper-ecs-repository` and click `Delete`
+
+4. Destroy the ECS task definition:
+
+    - In the console: search `ECS`, click `Task Definitions` on the left side panel
+    - Click `indeed-scraper-ecs-task`, select `indeed-scraper-ecs-task`
+    - Click `Actions` and click `Deregister`
+
+5. Destroy the ECS cluster:
+
+    - In the console: search `ECS`, click `Clusters` on the left side panel
+    - Click `indeed-scraper-ecs-cluster` and click `Delete Cluster`
+
+6. Delete IAM permissions:
+
+    - In the console: search `IAM`, click `Policies`, and delete all `Customer managed` policies
+    - In the console: search `IAM`, click `Roles`, and delete `AmazonRedshift-CommandsAccessRole-20221215T204149`, `ecsTaskExecutionRole`, and `AWSServiceRoleForECS`
+
