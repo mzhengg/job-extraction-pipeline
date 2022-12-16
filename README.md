@@ -4,9 +4,8 @@ Software engineering is one of the most in-demand, highest paying jobs currently
 
 ## Technologies:
 
-* Python (Selenium, Boto3, Pandas, Psycopg2)
-* AWS (S3, Fargate, MWAA, Redshift)
-* Airflow
+* Python (Selenium, Boto3, Psycopg2)
+* AWS (S3, Fargate, Redshift, ECR, ECS)
 * Docker
 
 ![My_Image](diagram.jpg)
@@ -31,15 +30,11 @@ Docker volume: file system mounted on Docker container to preserve data generate
 
 “Docker rule” is to outsource every process to its own container.  
 
-## Overview of Airflow
-
-Apache Airflow is the most popular data workflow orchestration tool.  
-
 ## How to Setup and Deploy Data Pipeline
 
 ### 1) Setup AWS Storage Infrastucture
 
-The AWS management console is used to set up the AWS infrastructure (S3, Fargate, MWAA, Redshift).  
+The AWS management console is used to set up the AWS infrastructure (S3, Fargate, Redshift, ECR, ECS).  
 
 #### Instructions
 
@@ -113,25 +108,25 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
 
 ### 2) ETL Pipeline Container Development
 
-AWS Fargate is used to host and execute a container that will: scrape Indeed.com using Selenium, upload the raw job postings to AWS S3, fix structural errors in the raw data, and store the structured data in AWS Redshift.  
+AWS Fargate is used to execute the container that will: scrape Indeed.com using Selenium, upload the raw job postings to AWS S3, fix structural errors in the raw data, and store the structured data in AWS Redshift.  
 
-The script currently only supports the scraping of Software Engineer jobs. In the future, there is room to scrape other jobs as well. But for now, we will scrape 10 pages of that one job every week.  
+The script currently only supports the scraping of Software Engineer jobs. In the future, there is room to scrape other jobs as well. But for now, we will scrape 10 pages of this job every week.  
 
-At first, I intended to use AWS Lambda to trigger the pipeline to run. However, I realized this wasn't necessary and it only added an extra layer of complexity. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to Dockerize my Selenium web crawler for deployment to AWS Fargate.  
+At first, I intended to use AWS Lambda to trigger the pipeline to run. But, I wanted to learn more about AWS so I chose a more complicated path. I encountered a lot of difficulty running headless Chrome in a container. After days of searching, I stumbled across this repo: https://github.com/umihico/docker-selenium-lambda. The repo provides a Dockerfile that builds a container which runs headless-chrome using the AWS Lambda RIE (Runtime Interface Emulator). Even though AWS Lambda isn't being used, this Dockerfile provides a convenient way to containerize my Selenium web crawler for deployment to an AWS ECS cluster.  
 
 #### Data Pipeline Overview
 
 1. The pipeline starts by executing `get_page_links`, which takes 3 parameters: job title, location of job, and number of pages to scrape. It takes these parameters and generates the Indeed links to each page that is to be scraped.  
 
-2. Each page contains links to the job postings. `get_job_links` is used to grab all the job links on a given page.  
+2. Each page contains links to job postings. `get_job_links` is used to grab all the job links on a given page.  
 
 3. The job links are then given to `upload_to_s3` which will call the `scraper` function on each job link to extract all the text from the given job post. It will save the job post as a text file to an s3 bucket. This s3 bucket will serve as a data lake. This function will also return a list of each job posting as a string.  
 
 4. `transformer` is called on the job post strings to extract the job title and the date when the job post was scraped. Each job will be stored in a list as these two attributes.  
 
-5. Then a connection to redshift is established and a table, if it doesn't already exist in the redshift cluster, is created in the `upload_to_redshift` function. Each job's attributes from before are inserted into the table.
+5. Then a connection to Redshift is established through the `upload_to_redshift` function, and each job's attributes from before are inserted into the table.
 
-    * AWS Redshift is essentially a PostgreSQL database, so psycopg2 was used to connect to the Redshift cluster. To do this, 5 parameters were given: `database name`, `port`, `master username`, `master password`, and the `host` name. These parameters are located in the `.env` file that we generated earlier. These parameters are passed into the container as environmental variables when the container is run.  
+    * AWS Redshift is essentially a PostgreSQL database, so psycopg2 was used to connect to the Redshift cluster. To do this, 5 parameters were given: `database name`, `port`, `master username`, `master password`, and the `host`. These parameters are located in the `.env` file that we generated earlier. These parameters are passed into the container as environmental variables when the container is run.  
 
 #### Test Instructions
 
@@ -167,9 +162,9 @@ docker rm scraper
 docker image rm scraper:latest
 ```
 
-### 3) Deploy ETL Container to AWS Fargate
+### 3) Deploy ETL Container to AWS
 
-Now that the data pipeline has been tested and verified to work on the local machine, it will be deployed to an AWS Fargate cluster to be run on a regular interval. This guide was used to set this up: https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537
+Now that the data pipeline has been tested and verified to work on the local machine, it will be deployed to an AWS ECS cluster. https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537 was used to set this up:  
 
 1. Setup ECR registry:
 
@@ -246,50 +241,9 @@ Now that the data pipeline has been tested and verified to work on the local mac
     - Under `Services` click `Create`
     - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `click on the first option`, Subnets = `click on the first option`
 
-### 4) Airflow DAG Development
+### 4) Destroy all AWS Infrastructure
 
-Airflow is used to orchestrate the ETL container in the ECS cluster using the AWS Fargate engine. Every week, the DAG will trigger the data pipeline to run. First, the DAG was created and tested using this repo: https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
-
-#### Test Instructions
-
-1. Build the Docker container image using the following command:
-
-```bash
-./mwaa-local-env build-image
-```
-
-2. Run a local Apache Airflow environment that is a close representation of MWAA by configuration.
-
-```bash
-./mwaa-local-env start
-```
-
-*To stop the local environment, Ctrl+C on the terminal and wait until the local runner and the postgres containers are stopped.*
-
-3. Access the Airflow UI
-
-By default, the `bootstrap.sh` script creates a username and password for your local Airflow environment.
-
-    - Username: `admin`
-    - Password: `test`
-    - Open the Apache Airflow UI: http://localhost:8080/
-
-4. Add DAGs and supporting files
-
-- Add DAG code to the `dags/` folder.
-- Add Python dependencies to `requirements/requirements.txt`.
-
-    * To test a requirements.txt without running Apache Airflow, use the following script:
-
-    ```bash
-    ./mwaa-local-env test-requirements
-    ```
-    
-- Add custom plugins to the `plugins/` folder.
-
-### 5) Destroy the AWS Infrastructure
-
-When the pipeline is no longer needed, the AWS infrastructure should be destroyed to ensure that no additional charges are incurred. 
+When the data pipeline is no longer needed, the AWS infrastructure should be destroyed to ensure that no additional charges are incurred.   
 
 #### Instructions
 
