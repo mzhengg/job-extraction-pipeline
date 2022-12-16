@@ -246,18 +246,20 @@ Now that the data pipeline has been tested and verified to work on the local mac
     - Under `Services` click `Create`
     - Launch type = `Fargate`, Operating system family = `Linux`, Task Definition = `choose the task definition created in step 3`, Service name = `indeed-scraper-fargate-service`, Number of tasks = `1`, Cluster VPC = `click on the first option`, Subnets = `click on the first option`
 
-### 4) Test and Deploy Airflow DAG to AWS MWAA
+### 4) Airflow DAG Development
 
-Airflow is used to orchestrate the lambda function. Every week, the DAG will trigger the data pipeline to scrape Indeed for new Software Engineering job postings. Each job posting will be saved as a .txt file in an S3 bucket. The S3 bucket will serve as a data lake. Then the raw data will be transformed using PySpark and uploaded to AWS Redshift. The DAG was developed and tested on a local machine using https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
+Airflow is used to orchestrate the ETL container in the ECS cluster using the AWS Fargate engine. Every week, the DAG will trigger the data pipeline to run. First, the DAG was created and tested using this repo: https://github.com/aws/aws-mwaa-local-runner. Then, the DAG was deployed to AWS MWAA.
 
-#### Steps
+#### Test Instructions
 
 1. Build the Docker container image using the following command:
+
 ```bash
 ./mwaa-local-env build-image
 ```
 
-2. Runs a local Apache Airflow environment that is a close representation of MWAA by configuration.
+2. Run a local Apache Airflow environment that is a close representation of MWAA by configuration.
+
 ```bash
 ./mwaa-local-env start
 ```
@@ -268,18 +270,21 @@ Airflow is used to orchestrate the lambda function. Every week, the DAG will tri
 
 By default, the `bootstrap.sh` script creates a username and password for your local Airflow environment.
 
-- Username: `admin`
-- Password: `test`
-- Open the Apache Airlfow UI: <http://localhost:8080/>.
+    - Username: `admin`
+    - Password: `test`
+    - Open the Apache Airflow UI: http://localhost:8080/
 
 4. Add DAGs and supporting files
 
 - Add DAG code to the `dags/` folder.
 - Add Python dependencies to `requirements/requirements.txt`.
+
     * To test a requirements.txt without running Apache Airflow, use the following script:
+
     ```bash
     ./mwaa-local-env test-requirements
     ```
+    
 - Add custom plugins to the `plugins/` folder.
 
 ### 5) Destroy the AWS Infrastructure
