@@ -42,7 +42,7 @@ port = os.getenv('AWS_REDSHIFT_PORT')
 host = os.getenv('AWS_REDSHIFT_HOST')
 
 # jobs to scrape
-jobs = [['software engineer', '', 1]]
+jobs = [['software engineer', '', 10]]
 
 def get_page_links(job, location, no_of_pages):
     # modify url to include job
@@ -166,10 +166,6 @@ def upload_to_redshift(processed_job_posts):
 
     # object to execute commands in redshift database
     cursor = connection.cursor()
-
-    # create table if it doesn't already exist
-    query = 'CREATE TABLE IF NOT EXISTS jobs (job_title VARCHAR(200), scraped_date DATE);'
-    cursor.execute(query)
 
     # insert each processed_job_post into the redshift table
     for processed_job_post in processed_job_posts:

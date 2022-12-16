@@ -88,17 +88,26 @@ The AWS management console is used to set up the AWS infrastructure (S3, Fargate
     - Under `Cluster permissions`, click `Manage IAM roles` and `Create IAM role`
     - Select `Any S3 bucket` and click `Create IAM role as default`
 
-8. Setup S3 bucket:
+8. Create the table in the Redshift cluster
+
+    - Go to search bar and lookup `Redshift`
+    - Click on the left side panel and select `Query editor`
+    - Click `Connect to database`: Connection = `Create a new connection`, Authentication = `Temporary credentials`, Cluster = `indeed-scraper-redshift-db`, Database name = `dev`, Database user = `username`
+    - Select schema = `public`
+    - In the query editor, type the following: `CREATE TABLE jobs(job_title VARCHAR(200), scraped_date DATE);`
+    - Hit `Run`
+
+9. Setup S3 bucket:
 
     - Go to search bar and lookup `S3`
     - Click on the left side panel and select `Buckets`
     - Click `Create bucket`: Bucket name = `indeed-scraper-s3-bucket`
 
-9. Save the S3 bucket name to `.env` as:
+10. Save the S3 bucket name to `.env` as:
 
     - AWS_S3_BUCKET_NAME=`indeed-scraper-s3-bucket`
 
-10. Depending on where you are located, input the AWS region whose servers you want to send your requests to by default in the `.env` file:
+11. Depending on where you are located, input the AWS region whose servers you want to send your requests to by default in the `.env` file:
 
     - AWS_DEFAULT_REGION=`us-east-1`
 
