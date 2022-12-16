@@ -228,6 +228,7 @@ Now that the data pipeline has been tested and verified to work on the local mac
     - Click on the left side panel and select `Clusters`
     - Click `Create Cluster` and select `Networking only`
     - Cluster name = `indeed-scraper-ecs-cluster`
+    - Create VPC = `Yes`
 
 6. Create Fargate service
 
